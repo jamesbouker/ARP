@@ -8,6 +8,29 @@
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
 
+//I can't get it to work with only one
+int rtSendFD;
+int rtReadFD;
+Tour tour;
+
+//Tour management
+void addStopToTour(char *vmName) {
+	char ip[16];
+	ipForVm(vmName, ip);
+	strcpy(tour.stops[tour.size].ipAddress, ip);
+	strcpy(tour.stops[tour.size++].vmName, vmName);
+}
+
+void printTour() {
+	printf("Printing Tour\nremaining stops: %d\n", tour.size-1);
+	int i;
+	for(i=0; i<tour.size; i++)
+		printf("%s ", tour.stops[i].vmName);
+	printf("\n\n");
+}
+
+
+//API
 int areq(struct sockaddr *IPaddr, socklen_t sockaddrlen, hwaddr *HWaddr) {
 	UnixDomainSocket *arpSocket = arpSocket = unixDomainSocketMake(UnixDomainSocketTypeARP, 1, NULL);
 	UnixDomainPacket packet;
@@ -55,14 +78,30 @@ int areq(struct sockaddr *IPaddr, socklen_t sockaddrlen, hwaddr *HWaddr) {
 	}
 }
 
-void setup() {
 
+// setup() & main()
+void setup() {
+	int on = 1;
+	int error = 0;
+	int ret;
+	
+	//create sockets
+	rtSendFD = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	rtReadFD = socket(AF_INET, SOCK_RAW, PROTOCOL_NUM);
+	
+	//set IP_HDRINCL
+	ret = setsockopt(rtReadFD, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
+	if(ret < 0) error = ret;
+	ret = setsockopt(rtSendFD, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
+	if(ret < 0) error = ret;
+
+	if(error != 0 || rtSendFD < 0 || rtReadFD < 0) {
+		printf("Something went wrong in tour setup()\nTerminating...\n");
+		exit(1);
+	}
 }
 
-int main(int argc, char **argv) {
-	setup();
-
-
+void areqHelper() {
 	struct sockaddr_in sock_addr;
 	hwaddr hw_addr;
 	bzero(&hw_addr, sizeof(hw_addr));
@@ -70,7 +109,29 @@ int main(int argc, char **argv) {
 	sock_addr.sin_family = AF_INET;
 	inet_pton(AF_INET, "127.0.0.1", &sock_addr.sin_addr);
 	areq((struct sockaddr*) &sock_addr, -1, &hw_addr);
+}
 
+int main(int argc, char **argv) {
+	setup();
+
+	//extract the tour
+	if(argc > 1) {
+		char me[16];
+		gethostname(me, 16);
+		addStopToTour(me);
+	}
+	int i;
+	for(i=1; i<argc; i++) {
+		addStopToTour(argv[i]);
+	}
+
+	//either kick off tour or wait in select
+	if(tour.size > 0) {
+		printTour();
+	}
+	else {
+
+	}
 
 	exit(1);
 }

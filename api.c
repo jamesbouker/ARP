@@ -8,6 +8,17 @@
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
 
+void ipForVm(char *vmName, char *ip) {
+	//TODO: This needs to be rewritted to use something dynamic
+	char ipHolder[16]; 
+	bzero(ipHolder, sizeof(ipHolder));
+	strcpy(ipHolder, "130.245.156.20");
+	ipHolder[13] = vmName[2];
+	if(strlen(vmName) > 3 && vmName[2] == '1' && vmName[3] == '0')
+		ipHolder[13] = '0';
+	strcpy(ip, ipHolder);
+}
+
 UnixDomainSocket * unixDomainSocketMake(UnixDomainSocketType type, int shouldBind, char *init_sun_path) {
 	UnixDomainSocket *unixSocket = malloc(sizeof(UnixDomainSocket));
 	bzero(unixSocket, sizeof(UnixDomainSocket));

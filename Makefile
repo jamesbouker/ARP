@@ -4,6 +4,8 @@ CFLAGS = ${FLAGS} -I/home/stufs1/cse533/Stevens/unpv13e/lib
 LIBS =  /home/courses/cse533/Stevens/unpv13e/libunp.a
 EXE = jbouker_arp jbouker_tour
 EVERYTHINGELSE = api.h
+#http://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/
+#Great tutorial - Got the makefile from there
 
 all: $(EXE)
 

@@ -4,6 +4,7 @@
 #include "unp.h"
 
 #define UNIX_PATH_ARP 	"/tmp/cse533-1895"
+#define PROTOCOL_NUM	7654
 
 typedef struct {
 	int             sll_ifindex;	 	/* Interface number */
@@ -27,6 +28,9 @@ typedef struct {
   	UnixDomainSocketType type;
   	int fd;
 } UnixDomainSocket;
+
+
+void				ipForVm(char *vmName, char *ip);
 
 //Unix Domain functions
 UnixDomainSocket   *unixDomainSocketMake(UnixDomainSocketType type, int shouldBind, char *init_sun_path);
