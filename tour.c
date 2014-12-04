@@ -81,6 +81,8 @@ int areq(struct sockaddr *IPaddr, socklen_t sockaddrlen, hwaddr *HWaddr) {
 
 // setup() & main()
 void setup() {
+	bzero(&tour, sizeof(tour));
+	
 	int on = 1;
 	int error = 0;
 	int ret;
