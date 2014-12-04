@@ -1,4 +1,9 @@
 #include "api.h"
+#include "api.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <strings.h>
 #include <sys/socket.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
@@ -10,7 +15,7 @@ UnixDomainSocket * unixDomainSocketMake(UnixDomainSocketType type, int shouldBin
 	struct sockaddr_un actualSocket; 
 	bzero(&actualSocket, sizeof(actualSocket));
 	char buff[MAXLINE];
-	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	int fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	char sun_path[MAXLINE];
 
 	if (type == UnixDomainSocketTypeARP && init_sun_path == NULL) {
@@ -35,7 +40,7 @@ UnixDomainSocket * unixDomainSocketMake(UnixDomainSocketType type, int shouldBin
 	printf("UnixDomainSocket sun_path: %s\n", unixSocket->sun_path);
 
 	unixDomainSocketUnlink(unixSocket);
-	actualSocket.sun_family = AF_UNIX;
+	actualSocket.sun_family = AF_LOCAL;
 	strcpy(actualSocket.sun_path, unixSocket->sun_path);
 
 	if(shouldBind) {
@@ -60,7 +65,7 @@ int readFromUnixDomainSocket(int fd, UnixDomainPacket *packet) {
 	return recvfrom(fd, packet, sizeof(UnixDomainPacket), 0, (struct sockaddr *)&actualSocket, &addrlen);
 }
 
-void acceptUnixDomainConnection(UnixDomainSocket * unixSocket) {
+int acceptUnixDomainConnection(UnixDomainSocket * unixSocket) {
 	struct sockaddr_un sock_addr;
 	socklen_t len = sizeof(sock_addr);
 	int ret = accept(unixSocket->fd, (struct sockaddr*)&sock_addr, &len);
@@ -70,4 +75,13 @@ void acceptUnixDomainConnection(UnixDomainSocket * unixSocket) {
     }
     else
     	printf("accepted connection!\n");
+    return ret; //fd
+}
+
+void printPacket(UnixDomainPacket *packet) {
+	printf("Packet Info:\ndestIpAddress: %s\n", packet->destIpAddress);
+	printf("sll_ifindex: %d\n", packet->hwAddr.sll_ifindex);
+	printf("sll_hatype: %d\n", packet->hwAddr.sll_hatype);
+	printf("sll_halen: %c\n", packet->hwAddr.sll_halen);
+	printf("sll_addr: %s\n\n", packet->hwAddr.sll_addr);
 }

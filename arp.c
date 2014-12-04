@@ -1,12 +1,12 @@
 #include "arp.h"
+#include "api.h"
 #include <stdio.h>
-#include <sys/socket.h>
-#include <netpacket/packet.h>
-#include <net/ethernet.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <strings.h>
-#include "api.h"
+#include <sys/socket.h>
+#include <netpacket/packet.h>
+#include <net/ethernet.h>
 
 Table table;
 int pfSocketFD;
@@ -129,15 +129,44 @@ void readSendLoop() {
 		if(ret > 0) {
 			printf("select returned: %d\n", ret);
 			if(FD_ISSET(arpSocket->fd, &set)) {
+				
 				//accept the connection!
-				acceptUnixDomainConnection(arpSocket);
+				int fd = acceptUnixDomainConnection(arpSocket);
 
+				//make pretend unix socket
+				UnixDomainSocket tempSocket;
+				tempSocket.fd = fd;
+				strcpy(tempSocket.sun_path, UNIX_PATH_ARP);
+
+				//make the packet which will recive the message
 	            UnixDomainPacket packet; 
 	            bzero(&packet, sizeof(packet));
-	            readFromUnixDomainSocket(arpSocket->fd, &packet);
+
+	            //read
+	            readFromUnixDomainSocket(tempSocket.fd, &packet);
+
+	            //handle read TODO
 	            printf("Read from socket: %s\n", packet.destIpAddress);
 	            printf("packet.hwAddr.sll_ifindex: %d\n", packet.hwAddr.sll_ifindex);
-	            //check if that is us, or in our table. 
+
+	            //if us or in our table respond right away
+	            //else erase from table and send out broadcast on pf_packet
+	            // put the ip and client FD in the table otherwise!
+
+	            UnixDomainPacket returnPacket; bzero(&returnPacket, sizeof(returnPacket));
+
+	            strcpy(returnPacket.destIpAddress, packet.destIpAddress);
+				returnPacket.hwAddr.sll_ifindex = 1;
+				returnPacket.hwAddr.sll_hatype = 1;
+				returnPacket.hwAddr.sll_halen = 5;
+				int i;
+				for(i=0; i<6; i++)
+					returnPacket.hwAddr.sll_addr[i] = 'c';
+
+				ret = send(tempSocket.fd, &returnPacket, sizeof(returnPacket), 0);
+				if(ret < 0)
+					printf("send error: %d\n", errno);
+				//close the connection!
 			}
 		}
 		else if(ret == 0) {

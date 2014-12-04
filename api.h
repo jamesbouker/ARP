@@ -32,11 +32,10 @@ typedef struct {
 UnixDomainSocket   *unixDomainSocketMake(UnixDomainSocketType type, int shouldBind, char *init_sun_path);
 void 				unixDomainSocketUnlink(UnixDomainSocket * unixSocket);
 int 				readFromUnixDomainSocket(int fd, UnixDomainPacket *packet);
-
-void				acceptUnixDomainConnection(UnixDomainSocket * unixSocket);
-
+int					acceptUnixDomainConnection(UnixDomainSocket * unixSocket);
 
 
+void 				printPacket(UnixDomainPacket *packet);
 
 //unused as of yet
 // int 		createARPUnixDomainSocket();		//used by client
