@@ -10,16 +10,13 @@ EVERYTHINGELSE = api.h
 all: $(EXE)
 
 jbouker_arp: arp.o api.o
-	gcc $(CFLAGS) -o $@ $^ ${LIBS}
+	gcc $(CFLAGS) -o $@ arp.o api.o ${LIBS}
 
 jbouker_tour: tour.o api.o
-	gcc $(CFLAGS) -o $@ $^ ${LIBS}
+	gcc $(CFLAGS) -o $@ tour.o api.o ${LIBS}
 
 %.o: %.c %.h $(EVERYTHINGELSE)
 	gcc $(CFLAGS) -c $^ ${LIBS}
-
-clean:
-	rm -f *.o *.out *.gch $(EXE)
 
 #use these to easily deploy, remove, start, and kill the executables
 

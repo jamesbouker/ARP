@@ -4,7 +4,7 @@
 #include "unp.h"
 
 #define UNIX_PATH_ARP 	"/tmp/cse533-1895"
-#define PROTOCOL_NUM	7654
+#define PROTOCOL_NUM	173
 
 typedef struct {
 	int             sll_ifindex;	 	/* Interface number */
