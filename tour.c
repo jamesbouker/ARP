@@ -340,7 +340,8 @@ void readSendLoop() {
 void setup() {
 	visitedByTour = 0;
 	heardMulticastBefore = 0;
-
+	bzero(&tour, sizeof(tour));
+	
 	int on = 1;
 	int error = 0;
 	int ret;
