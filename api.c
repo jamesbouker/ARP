@@ -1,5 +1,6 @@
 #include "api.h"
 #include "api.h"
+#include "prhwaddrs.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -7,6 +8,46 @@
 #include <sys/socket.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
+
+void rawPacketBuffer(RawPacket *packetPtr, char *buffer) {
+	RawPacket packet = packetPtr[0];
+	int i, j=0;
+	for(i=0; i<6; i++)
+		buffer[j++] = packet.destHWAddr[i];
+	for(i=0; i<6; i++)
+		buffer[j++] = packet.sourceHWAddr[i];
+	buffer[j++] = packet.protocolNum / 256;
+	buffer[j++] = packet.protocolNum % 256;
+	char *unixPacketPtr = (char*)&packet.unixPacket;
+	for(i=0; i<sizeof(packet.unixPacket); i++)
+		buffer[j++] = unixPacketPtr[i];
+}
+
+void printInterface(Interface inf) {
+	printf("Interface: %s\n", inf.if_name);
+	printf("if_index: %d\n", inf.if_index);
+	printf("ip_addr: %s\n", inf.ip_addr);
+}
+
+Interface getEth0() {
+	struct 	hwa_info *hwa;
+	struct 	sockaddr *sa;
+	Interface eth0;
+	bzero(&eth0, sizeof(eth0));
+	for (hwa = Get_hw_addrs(); hwa != NULL; hwa = hwa->hwa_next) {
+		sa = hwa->ip_addr;
+		if(strcmp(hwa->if_name, "eth0") == 0) {
+			char *ip_addr = sock_ntop_host(sa, sizeof(*sa));
+			strcpy(eth0.ip_addr, ip_addr);
+			strcpy(eth0.if_name, hwa->if_name);
+			eth0.if_index = hwa->if_index;
+			int i;
+			for(i=0; i<6; i++)
+				eth0.hw_addr[i] = hwa->if_haddr[i];
+		}
+	}
+	return eth0;
+}
 
 void ipForVm(char *vmName, char *ip) {
 	//TODO: This needs to be rewritted to use something dynamic

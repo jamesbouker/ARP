@@ -102,28 +102,31 @@ int areq(struct sockaddr *IPaddr, socklen_t sockaddrlen, hwaddr *HWaddr) {
 		if(ret > 0) {
 			printf("select returned: %d\n", ret);
 			if(FD_ISSET(arpSocket->fd, &set)) {
-				printf("FD_ISSET: Attempt to read here!\n");
 				UnixDomainPacket returnPacket; bzero(&returnPacket, sizeof(returnPacket));
 				readFromUnixDomainSocket(arpSocket->fd, &returnPacket);
-				printPacket(&returnPacket);
+				printf("areq() returned with the hw_addr\n");
+				printf("Ready to PING\n");
+				return 1;
 			}
 		}
 		else if(ret == 0) {
 			printf("Timeout\n");
+			return -1;
 		}
 		else {
 			printf("select error\n");
+			return -1;
 		}
 	}
 }
 
-void areqHelper() {
+void areqHelper(char *destIpAddress) {
 	struct sockaddr_in sock_addr;
 	hwaddr hw_addr;
 	bzero(&hw_addr, sizeof(hw_addr));
 	bzero(&sock_addr, sizeof(sock_addr));
 	sock_addr.sin_family = AF_INET;
-	inet_pton(AF_INET, "127.0.0.1", &sock_addr.sin_addr);
+	inet_pton(AF_INET, destIpAddress, &sock_addr.sin_addr);
 	areq((struct sockaddr*) &sock_addr, -1, &hw_addr);
 }
 
@@ -253,6 +256,7 @@ void goOnTour() {
 	else {
 		char buffer[100];
 	    sprintf(buffer, "<<<<< This is node %s. Tour has ended. Group members please identify yourselves.>>>>>", tour.stops[tour.currentStop-1].vmName);
+	   	heardMulticastBefore = 1;
 	    printf("%s\n", buffer);
 	    int ret = sendto(multicastFD, buffer, sizeof(buffer), 0, (struct sockaddr *)&multicast_sock_addr, sizeof(multicast_sock_addr));
 	    if(ret > 0)
@@ -290,12 +294,15 @@ void readSendLoop() {
 				recvfrom(rtReadFD, packetData, TOUR_SIZE, 0, (struct sockaddr *)&from_addr, &len);
 				iphdr = (struct ip *)packetData;
 				if(TOUR_IP_ID == ntohs(iphdr->ip_id)) {
-					initMulticastSocket();
-
 					tourData = (Tour *)(packetData + 20);
 					tour = tourData[0];
-
 					TourStop lastStop = tour.stops[tour.currentStop-1];
+
+					if(visitedByTour == 0) {
+						areqHelper(lastStop.ipAddress);
+						initMulticastSocket();
+					}
+
 					printf("\n<time> received source routing packet from %s\n", lastStop.vmName);
 					tour.currentStop++;
 					goOnTour();
@@ -340,8 +347,7 @@ void readSendLoop() {
 void setup() {
 	visitedByTour = 0;
 	heardMulticastBefore = 0;
-	bzero(&tour, sizeof(tour));
-	
+
 	int on = 1;
 	int error = 0;
 	int ret;

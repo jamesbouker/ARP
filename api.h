@@ -5,6 +5,7 @@
 
 #define UNIX_PATH_ARP 	"/tmp/cse533-1895"
 #define PROTOCOL_NUM	173
+#define RAW_PACKET_SIZE	46
 
 typedef struct {
 	int             sll_ifindex;	 	/* Interface number */
@@ -18,6 +19,13 @@ typedef struct {
 	char destIpAddress[16];
 } UnixDomainPacket;
 
+typedef struct {
+	char destHWAddr[6];
+	char sourceHWAddr[6];
+	int protocolNum;
+	UnixDomainPacket unixPacket;
+} RawPacket;
+
 typedef enum {
 	UnixDomainSocketTypeTour = 0,
 	UnixDomainSocketTypeARP
@@ -29,6 +37,17 @@ typedef struct {
   	int fd;
 } UnixDomainSocket;
 
+typedef struct {
+	int if_index;
+	char hw_addr[6];
+  	char ip_addr[MAXLINE];
+  	char if_name[MAXLINE];
+} Interface;
+
+void 				rawPacketBuffer(RawPacket *packet, char *buffer);
+
+Interface 			getEth0();
+void 				printInterface(Interface inf);
 
 void				ipForVm(char *vmName, char *ip);
 
@@ -37,8 +56,6 @@ UnixDomainSocket   *unixDomainSocketMake(UnixDomainSocketType type, int shouldBi
 void 				unixDomainSocketUnlink(UnixDomainSocket * unixSocket);
 int 				readFromUnixDomainSocket(int fd, UnixDomainPacket *packet);
 int					acceptUnixDomainConnection(UnixDomainSocket * unixSocket);
-
-
 void 				printPacket(UnixDomainPacket *packet);
 
 //unused as of yet
