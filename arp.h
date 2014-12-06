@@ -8,7 +8,6 @@ typedef struct {
 	char ip_address[16];
 	char hw_addr[6];
 	int sll_ifindex;
-	unsigned short sll_hatype;
 	int client_fd;
 } TableInfo;
 
@@ -18,7 +17,7 @@ typedef struct {
 } Table;
 
 //Table functions
-TableInfo 	*insertIncompleteEntry(char *ipAddress, int if_index, unsigned short hatype, int clientFd);
+TableInfo 	*insertIncompleteEntry(char *ipAddress, int if_index, int clientFd);
 TableInfo 	*updateEntry(char *ipAddress, char *hw_addr);
 TableInfo 	*entryForIp(char *ipAddress);
 void 		removeEntry(char *ipAddress);

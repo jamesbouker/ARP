@@ -16,12 +16,11 @@ UnixDomainSocket *arpSocket;
 
 //Table Shenanigans
 
-TableInfo *insertIncompleteEntry(char *ipAddress, int if_index, unsigned short hatype, int clientFd) {
+TableInfo *insertIncompleteEntry(char *ipAddress, int if_index, int clientFd) {
 	TableInfo info;
 	bzero(&info, sizeof(info));
 	strcpy(info.ip_address, ipAddress);
 	info.sll_ifindex = if_index;
-	info.sll_hatype = hatype;
 	info.client_fd = clientFd;
 
 	table.entries[table.size++] = info;
@@ -232,7 +231,6 @@ void readSendLoop() {
 					updateEntry(packet.destIpAddress, (char*)packet.hwAddr.sll_addr);
 
 					info->sll_ifindex = packet.hwAddr.sll_ifindex;
-					info->sll_hatype = packet.hwAddr.sll_ifindex;
 		            if(info != NULL && isEntryValid(info)) {
 		            	UnixDomainPacket returnPacket; 
 			            bzero(&returnPacket, sizeof(returnPacket));
@@ -299,7 +297,7 @@ void readSendLoop() {
 	            }
 	            else {
 	            	printf("Could not find in table, inserting incomplete entry and broadcasting\n");
-	            	insertIncompleteEntry(packet.destIpAddress, -1, 1, fd);
+	            	insertIncompleteEntry(packet.destIpAddress, -1, fd);
 	            	broadcast(packet.destIpAddress);
 	            }
 			}
