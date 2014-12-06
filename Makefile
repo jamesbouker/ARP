@@ -18,9 +18,6 @@ jbouker_tour: tour.o api.o prhwaddrs.o
 %.o: %.c %.h $(EVERYTHINGELSE)
 	gcc $(CFLAGS) -c $^ ${LIBS}
 
-clean:
-	rm -f *.o *.out *.gch $(EXE)
-
 #use these to easily deploy, remove, start, and kill the executables
 
 deploy:
